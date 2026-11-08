@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# skills-link — symlink skills from ~/Projects/skills into Claude Code and Codex.
+#
+#   skills-link global [--apply]
+#       Link every skill in personal/ into ~/.claude/skills and ~/.codex/skills.
+#
+#   skills-link add <repo> <stack-or-skill>... [--apply]
+#       Link skills into <repo>/.agents/skills (Codex) and <repo>/.claude/skills
+#       (Claude Code), and hide the links via <repo>/.git/info/exclude.
+#       An argument can be a whole stack ("convex") or one skill ("convex-auth").
+#
+#   skills-link status [<repo>]
+#       Show what is linked (globally, or in a repo) and flag broken links.
+#
+# Without --apply nothing is changed: it prints what it would do.
+# It never deletes real files/folders. Existing broken links are replaced;
+# a real folder or a link pointing somewhere else is skipped with a warning.
+
+set -euo pipefail
+shopt -s nullglob
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APPLY=0
+ARGS=()
+for a in "$@"; do
+  if [[ "$a" == "--apply" ]]; then APPLY=1; else ARGS+=("$a"); fi
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+
+run() { if (( APPLY )); then "$@"; else echo "  would: $*"; fi; }
+warn() { echo "  SKIP: $*" >&2; }
+
+# link <source-skill-dir> <dest-skills-dir>
+link() {
+  local src="$1" destdir="$2" name dest
+  name="$(basename "$src")"
+  dest="$destdir/$name"
+  if [[ -L "$dest" ]]; then
+    local cur; cur="$(readlink "$dest")"
+    if [[ "$cur" == "$src" ]]; then echo "  ok:    $dest"; return 0; fi
+    if [[ ! -e "$dest" ]]; then
+      echo "  fix broken link $dest (was -> $cur)"
+      run rm "$dest"
+    else
+      warn "$dest already links to $cur"; return 1
+    fi
+  elif [[ -e "$dest" ]]; then
+    warn "$dest is a real folder (remove it yourself if the ~/Projects/skills copy should win)"; return 1
+  fi
+  [[ -d "$destdir" ]] || { (( ! APPLY )) && [[ " ${MADE:-} " == *" $destdir "* ]]; } || { run mkdir -p "$destdir"; MADE="${MADE:-} $destdir"; }
+  echo "  link:  $dest -> $src"
+  run ln -s "$src" "$dest"
+}
+
+# resolve a stack name or skill name to skill dirs
+resolve() {
+  local q="$1"
+  if [[ -d "$ROOT/stacks/$q" ]]; then
+    for d in "$ROOT/stacks/$q"/*/; do echo "${d%/}"; done
+  elif [[ -n "$(echo "$ROOT"/stacks/*/"$q"/SKILL.md)" ]]; then
+    dirname "$(echo "$ROOT"/stacks/*/"$q"/SKILL.md)"
+  elif [[ -f "$ROOT/personal/$q/SKILL.md" ]]; then
+    echo "$ROOT/personal/$q"
+  else
+    echo "unknown stack or skill: $q (see: ls $ROOT/stacks)" >&2; return 1
+  fi
+}
+
+exclude() {
+  local repo="$1" entry="$2" top prefix ex
+  top="$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null)" || { warn "$repo is not in a git repo; not editing exclude"; return; }
+  prefix="$(git -C "$repo" rev-parse --show-prefix)"
+  ex="$(git -C "$repo" rev-parse --absolute-git-dir)/info/exclude"
+  entry="/$prefix$entry"
+  grep -qxF "$entry" "$ex" 2>/dev/null && return
+  echo "  exclude: $entry"
+  if (( APPLY )); then echo "$entry" >> "$ex"; else echo "  would: append '$entry' to $ex"; fi
+}
+
+status_dir() {
+  local d="$1"
+  [[ -d "$d" ]] || return 0
+  echo "$d"
+  for e in "$d"/*; do
+    local n; n="$(basename "$e")"
+    if [[ -L "$e" && ! -e "$e" ]]; then echo "  BROKEN  $n -> $(readlink "$e")"
+    elif [[ -L "$e" ]]; then echo "  link    $n -> $(readlink "$e")"
+    else echo "  folder  $n"; fi
+  done
+}
+
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  global)
+    (( APPLY )) || echo "(dry run — add --apply to make changes)"
+    for s in "$ROOT"/personal/*/; do
+      s="${s%/}"
+      link "$s" "$HOME/.claude/skills"
+      link "$s" "$HOME/.codex/skills"
+    done
+    ;;
+  add)
+    repo="$(cd "${1:?usage: skills-link add <repo> <stack-or-skill>...}" && pwd)"; shift
+    [[ $# -gt 0 ]] || { echo "name at least one stack or skill" >&2; exit 1; }
+    (( APPLY )) || echo "(dry run — add --apply to make changes)"
+    for q in "$@"; do
+      while read -r s; do
+        n="$(basename "$s")"
+        if link "$s" "$repo/.agents/skills"; then exclude "$repo" ".agents/skills/$n"; fi
+        if link "$s" "$repo/.claude/skills"; then exclude "$repo" ".claude/skills/$n"; fi
+      done < <(resolve "$q")
+    done
+    ;;
+  status)
+    if [[ -n "${1:-}" ]]; then
+      repo="$(cd "$1" && pwd)"
+      status_dir "$repo/.agents/skills"; status_dir "$repo/.claude/skills"
+    else
+      status_dir "$HOME/.claude/skills"; status_dir "$HOME/.codex/skills"
+    fi
+    ;;
+  *)
+    sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+    exit 1
+    ;;
+esac
