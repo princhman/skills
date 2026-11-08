@@ -40,8 +40,10 @@ Find the base after `git fetch origin`:
 
 The change is base to working tree in those paths, with untracked files.
 Use one diff command all rounds. State intent and out-of-scope in 1-2
-sentences. Run covering checks. Do not send code this change breaks. Note
-missing or pre-failing checks in the brief.
+sentences. Inspect nearby implementations and the app's shared components,
+utilities, design tokens, and comment conventions to establish the existing
+patterns before reviewing. Run covering checks. Do not send code this change
+breaks. Note missing or pre-failing checks in the brief.
 
 ## 2. Start Sol
 
@@ -68,10 +70,18 @@ Review only. Do not edit, commit, push, comment on PRs, or start subagents.
 Repo: <abs path> Base: <sha> Intent: <intent> Out of scope: <scope> Checks: <results>
 See: git diff <base> [-- <paths>]; git status --short (read untracked).
 Read surrounding code. Find bugs, broken callers, mismatch with intent.
-Skip style unless it hides a bug. Hold to the smallest change. Flag code,
+Check consistency with the rest of the app: architecture and data flow,
+visual and interaction design, component APIs, naming, and comment style.
+Prefer existing components, utilities, and design tokens where they fit;
+flag unnecessary duplication or parallel patterns. Cite the existing pattern
+and suggest the smallest reuse or alignment change. Respect intentional
+changes required by the task; do not expand into app-wide refactoring.
+Cosmetic preferences are nits. Hold to the smallest change. Flag code,
 tests, or guards the intent does not need. Other paths, rare cases, small
 perf, extra compat: nits.
-blocker = intended case wrong. should = real bug callers will hit, in intent. nit = rest.
+blocker = intended case wrong. should = real bug callers will hit, in intent,
+or an unjustified inconsistency/duplication in scope that materially harms
+app consistency or maintainability. nit = rest.
 Reply:
 VERDICT: APPROVE or CHANGES
 S1 [blocker|should|nit] <file>:<line> <claim>. Fix: <suggestion> (stable ids)
