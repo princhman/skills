@@ -10,7 +10,7 @@ bin/skills-link  creates the links (dry run unless --apply)
 
 | Folder | Skills |
 |---|---|
-| `personal/` | `test-audit`, `web-animation-design` |
+| `personal/` | `handoff`, `pair-fix`, `perf-investigate`, `sol-loop`, `test-audit`, `untangle-codebase`, `web-animation-design` |
 | `stacks/convex/` | 33 skills from `get-convex/agent-skills` (copied from chessles/ai-mobile) |
 | `stacks/cloudflare/` | 13 skills (agents-sdk, wrangler, durable-objects, …) |
 | `stacks/swift/` | `swiftui-expert-skill` |
