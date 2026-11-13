@@ -27,6 +27,7 @@ user, and the watcher, tell agent messages from human ones.
 | Fix your own comment | `comment_update` |
 | Attach proof | `file_upload`, then a comment |
 | Wait for the user's reply | `issue_watch`; stop with `issue_unwatch` |
+| A reply didn't arrive | `issue_watch_status` (each delivery's state and last error) |
 
 States, labels, projects and teams are names, matched case-insensitively. A
 wrong name returns the valid ones; pick from that list, never invent one.
@@ -60,7 +61,11 @@ comment quoted and its ID. Then:
 4. `issue_unwatch` once nothing on the issue waits for the user any more
    (answered and building, merged, or closed). Watches expire after 14 days.
 
-Only new comments by people are delivered. Edited comments, status changes and
+If a reply you expected hasn't arrived, check `issue_watch_status` before
+anything else and report its error. Calling `issue_watch` again retries failed
+deliveries. Keep any fallback check until one reply has actually arrived.
+
+Only new comments by people are delivered (replies inside a comment thread count). Edited comments, status changes and
 Agentline's own posts are not.
 
 ## Proof
