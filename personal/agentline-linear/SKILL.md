@@ -82,6 +82,19 @@ PUT within 60 seconds of `file_upload`, with every returned header. Then
 `comment_create` saying what each file shows, with `![before](assetUrl)` or a
 plain link for videos. Delete the local file afterwards.
 
+## Writing comments
+
+The user reads these on a phone. Get to the point.
+
+- Lead with the answer or the result in one sentence. No greeting, recap of
+  the request or narration of what you did step by step.
+- At most ~5 short lines or bullets. A question asks one thing and lists the
+  options in a line each.
+- Proof: one line per file saying what it shows. Nothing else.
+- Leave out SHAs, branch names, file paths, test counts and tool output unless
+  the user asked. Those go in the PR or your report, not Linear.
+- Plain words, no headings, no tables unless comparing options side by side.
+
 ## Don't
 
 - Don't copy Linear's `gitBranchName` prefix (`novvladkyiv/…`) into branch
