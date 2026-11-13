@@ -81,8 +81,11 @@ curl -sf -X PUT "$uploadUrl" -H "Content-Type: video/mp4" -H "Cache-Control: pub
 PUT within 60 seconds of `file_upload`, with every returned header. Then
 `comment_create` saying what each file shows. Embed images and videos inline
 so the user can view or play them in the comment; do not post videos as plain
-text links. Use Linear's supported media embed format and verify that a video
-renders as a player, not just a link. Delete the local file afterwards.
+text links. Every video shown to the user in Linear must be embedded, including
+reposted or previously uploaded videos: `![What the video shows](assetUrl)`,
+never `[Watch video](assetUrl)` or a bare URL. Verify it renders as a player;
+if it renders as a link, fix the comment before reporting the proof as ready.
+Delete the local file afterwards.
 
 ## Writing comments
 
