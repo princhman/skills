@@ -27,10 +27,12 @@ choice, missing repro steps), don't start that issue:
   each with what you'd do. Mention the user.
 - Put the issue in a waiting state the tracker supports (a "Needs input"
   label, or the guide's convention).
-- Watch for the answer: if the harness can schedule work (for example T3
-  `schedule_task` with an interval), schedule a check of the waiting issues'
-  comments every 20–30 minutes, bound to this thread. Delete it when nothing is
-  waiting. Otherwise say in the report which issues are waiting.
+- Watch for the answer. With the `agentline` tools (see the
+  `agentline-linear` skill), call `issue_watch` and the reply arrives as a new
+  message; don't poll. Without them, if the harness can schedule work (for
+  example T3 `schedule_task` with an interval), schedule a check of the waiting
+  issues' comments every 20–30 minutes, bound to this thread, and delete it when
+  nothing is waiting. Otherwise say in the report which issues are waiting.
 - Move on to the next issue meanwhile.
 
 ## 3. Work each issue on its own branch
